@@ -1,1 +1,8 @@
-{"name":"medexpert","version":"1.0.0","scripts":{"start":"node backend/server.js","build":"cd backend && npm install"}} 
+{
+  "name": "medexpert",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node backend/server.js",
+    "build": "cd backend && npm install"
+  }
+}
