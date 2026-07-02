@@ -1,0 +1,3860 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PurpleVision Medical Expert System</title>
+    <!-- Backend API base URL. Change this if you deploy the API elsewhere. -->
+    <script>
+      window.MEDEXPERT_API_BASE_URL = "http://localhost:5000/api";
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                50: "#faf5ff",
+                100: "#f3e8ff",
+                200: "#e9d5ff",
+                300: "#d8b4fe",
+                400: "#c084fc",
+                500: "#a855f7",
+                600: "#9333ea",
+                700: "#7e22ce",
+                800: "#6b21a8",
+                900: "#581c87",
+              },
+            },
+            fontFamily: { sans: ["Inter", "sans-serif"] },
+          },
+        },
+      };
+    </script>
+    <style>
+      * {
+        font-family: "Inter", sans-serif;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        background: #ffffff;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+
+      /* Refined focus ring — keeps native browser accessibility, just tidier */
+      a:focus-visible,
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      textarea:focus-visible {
+        outline: 2px solid #a855f7;
+        outline-offset: 2px;
+        border-radius: 6px;
+      }
+
+      /* Smooth scrollbar, light touch */
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #faf5ff;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #d8b4fe;
+        border-radius: 999px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #a855f7;
+      }
+
+      .gradient-hero {
+        background: linear-gradient(
+          135deg,
+          #581c87 0%,
+          #7e22ce 40%,
+          #a855f7 100%
+        );
+      }
+      .gradient-cta {
+        background: linear-gradient(
+          135deg,
+          #7e22ce 0%,
+          #a855f7 50%,
+          #c084fc 100%
+        );
+      }
+      .nav-link {
+        position: relative;
+        transition: color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+          border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+          background 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .nav-link.active {
+        color: #7e22ce;
+        border: 1.5px solid #7e22ce;
+        border-radius: 9999px;
+        padding: 6px 16px;
+      }
+      .nav-link:hover:not(.active) {
+        color: #7e22ce;
+      }
+      .symptom-chip {
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1.5px solid #e5e7eb;
+      }
+      .symptom-chip:hover {
+        border-color: #a855f7;
+        color: #7e22ce;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(168, 85, 247, 0.12);
+      }
+      .symptom-chip.selected {
+        background: #7e22ce;
+        color: white;
+        border-color: #7e22ce;
+        box-shadow: 0 4px 14px rgba(126, 34, 206, 0.3);
+      }
+      .hospital-card,
+      .specialist-card {
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+          box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+          border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid #e5e7eb;
+      }
+      .hospital-card:hover,
+      .specialist-card:hover {
+        box-shadow: 0 14px 44px rgba(126, 34, 206, 0.12);
+        border-color: #d8b4fe;
+        transform: translateY(-3px);
+      }
+      .step-card {
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+          box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .step-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 14px 44px rgba(126, 34, 206, 0.1);
+      }
+      .feature-badge {
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .feature-badge:hover {
+        background: #f3e8ff;
+        border-color: #d8b4fe;
+        transform: translateY(-2px);
+      }
+      .therapy-card {
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+          box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid #e5e7eb;
+      }
+      .therapy-card:hover {
+        box-shadow: 0 12px 36px rgba(126, 34, 206, 0.1);
+        transform: translateY(-2px);
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #9333ea, #a855f7);
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+          box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+          filter 0.25s ease;
+      }
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 28px rgba(147, 51, 234, 0.4);
+        filter: brightness(1.04);
+      }
+      .btn-primary:active {
+        transform: translateY(0) scale(0.98);
+        box-shadow: 0 4px 14px rgba(147, 51, 234, 0.35);
+      }
+      .btn-outline {
+        border: 1.5px solid rgba(255, 255, 255, 0.3);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .btn-outline:hover {
+        background: rgba(255, 255, 255, 0.15);
+        transform: translateY(-1px);
+      }
+      .search-input,
+      .form-input {
+        transition: border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+          box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .search-input:focus,
+      .form-input:focus {
+        border-color: #a855f7;
+        box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+        outline: none;
+      }
+      .form-input {
+        border: 1.5px solid #e5e7eb;
+      }
+      .fade-in {
+        animation: fadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .pulse-dot {
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+      .urgency-high {
+        color: #dc2626;
+        background: #fef2f2;
+      }
+      .urgency-moderate {
+        color: #ea580c;
+        background: #fff7ed;
+      }
+      .urgency-low {
+        color: #16a34a;
+        background: #f0fdf4;
+      }
+      .stat-number {
+        background: linear-gradient(135deg, #fff, #e9d5ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .footer-dark {
+        background: linear-gradient(180deg, #1a0b2e 0%, #0f0518 100%);
+      }
+      .admin-card {
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+      }
+      .mobile-menu {
+        transform: translateX(100%);
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        top: 0;
+        bottom: 0;
+        height: 100vh;
+        overflow-y: auto;
+      }
+      .mobile-menu.open {
+        transform: translateX(0);
+      }
+      .page-section.hidden {
+        display: none;
+      }
+
+      /* ── About page bio block (was unstyled — image + text now sit in a
+         proper card layout on desktop and stack cleanly on mobile) ── */
+      .image-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid #f3e8ff;
+        border-radius: 1.25rem;
+        padding: 2rem;
+        margin-bottom: 3rem;
+        box-shadow: 0 4px 20px rgba(126, 34, 206, 0.05);
+      }
+      .image-container .left {
+        flex: 0 0 220px;
+        padding-bottom: 0;
+        display: flex;
+        justify-content: center;
+      }
+      .image-container .left img {
+        width: 200px;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 1rem;
+        box-shadow: 0 10px 30px rgba(126, 34, 206, 0.18);
+        border: 4px solid #f3e8ff;
+      }
+      .image-container .right {
+        flex: 1 1 320px;
+        color: #4b5563;
+        font-size: 0.95rem;
+        line-height: 1.75;
+      }
+      @media (max-width: 640px) {
+        .image-container {
+          flex-direction: column;
+          padding: 1.5rem;
+          text-align: center;
+        }
+        .image-container .left img {
+          width: 160px;
+          height: 160px;
+        }
+      }
+
+      /* ── Subtle scroll-reveal for sections, respects reduced motion ── */
+      .reveal-on-scroll {
+        opacity: 0;
+        transform: translateY(16px);
+        transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+          transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .reveal-on-scroll.revealed {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .reveal-on-scroll {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+        .fade-in,
+        .pulse-dot {
+          animation: none !important;
+        }
+      }
+
+      /* ════════════════ Floating AI Chat Widget ════════════════ */
+      .chat-fab {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #9333ea, #a855f7);
+        box-shadow: 0 8px 28px rgba(126, 34, 206, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.4rem;
+        border: none;
+        cursor: pointer;
+        z-index: 60;
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+          box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: chatFabIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .chat-fab:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 12px 34px rgba(126, 34, 206, 0.5);
+      }
+      .chat-fab:active {
+        transform: scale(0.95);
+      }
+      .chat-fab .chat-fab-badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        width: 16px;
+        height: 16px;
+        background: #16a34a;
+        border: 2px solid white;
+        border-radius: 50%;
+      }
+      @keyframes chatFabIn {
+        from {
+          opacity: 0;
+          transform: scale(0.5);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      .chat-window {
+        position: fixed;
+        bottom: 96px;
+        right: 24px;
+        width: 360px;
+        max-width: calc(100vw - 32px);
+        height: 480px;
+        max-height: calc(100vh - 140px);
+        background: white;
+        border-radius: 1.25rem;
+        box-shadow: 0 24px 70px rgba(45, 10, 80, 0.25);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 60;
+        transform: translateY(16px) scale(0.97);
+        opacity: 0;
+        pointer-events: none;
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+          opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .chat-window.open {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .chat-window-header {
+        background: linear-gradient(135deg, #581c87 0%, #7e22ce 60%, #a855f7 100%);
+        padding: 16px 18px;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+      }
+      .chat-window-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        background: #faf9fb;
+      }
+      .chat-bubble {
+        max-width: 82%;
+        padding: 10px 14px;
+        border-radius: 14px;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .chat-bubble.bot {
+        align-self: flex-start;
+        background: white;
+        color: #374151;
+        border: 1px solid #f0e9fb;
+        border-bottom-left-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+      }
+      .chat-bubble.user {
+        align-self: flex-end;
+        background: linear-gradient(135deg, #9333ea, #a855f7);
+        color: white;
+        border-bottom-right-radius: 4px;
+      }
+      .chat-typing {
+        align-self: flex-start;
+        display: flex;
+        gap: 4px;
+        padding: 12px 14px;
+        background: white;
+        border: 1px solid #f0e9fb;
+        border-radius: 14px;
+        border-bottom-left-radius: 4px;
+      }
+      .chat-typing span {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #c084fc;
+        animation: chatTyping 1.2s infinite ease-in-out;
+      }
+      .chat-typing span:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+      .chat-typing span:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      @keyframes chatTyping {
+        0%,
+        60%,
+        100% {
+          transform: translateY(0);
+          opacity: 0.5;
+        }
+        30% {
+          transform: translateY(-4px);
+          opacity: 1;
+        }
+      }
+      .chat-window-footer {
+        padding: 12px;
+        border-top: 1px solid #f0e9fb;
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+        background: white;
+      }
+      .chat-window-footer input {
+        flex: 1;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 999px;
+        padding: 9px 14px;
+        font-size: 0.85rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+      .chat-window-footer input:focus {
+        outline: none;
+        border-color: #a855f7;
+        box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+      }
+      .chat-window-footer button {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #9333ea, #a855f7);
+        color: white;
+        border: none;
+        flex-shrink: 0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .chat-window-footer button:hover {
+        transform: scale(1.06);
+        box-shadow: 0 4px 14px rgba(147, 51, 234, 0.35);
+      }
+      .chat-window-footer button:active {
+        transform: scale(0.94);
+      }
+      .chat-quick-replies {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 0 16px 12px;
+        flex-shrink: 0;
+      }
+      .chat-quick-reply {
+        font-size: 0.72rem;
+        padding: 5px 10px;
+        border-radius: 999px;
+        border: 1.5px solid #e9d5ff;
+        color: #7e22ce;
+        background: #faf5ff;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+      }
+      .chat-quick-reply:hover {
+        background: #7e22ce;
+        color: white;
+        border-color: #7e22ce;
+      }
+
+      @media (max-width: 480px) {
+        .chat-window {
+          right: 16px;
+          left: 16px;
+          width: auto;
+          bottom: 90px;
+        }
+        .chat-fab {
+          right: 16px;
+          bottom: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-white text-gray-800 antialiased">
+    <!-- Navigation -->
+    <nav
+      class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100"
+    >
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <div
+            class="flex items-center gap-3 cursor-pointer"
+            onclick="showPage('home')"
+          >
+            <div
+              class="w-10 h-10 rounded-full bg-gradient-to-br from-primary-600 to-primary-400 flex items-center justify-center"
+            >
+              <i class="fas fa-heartbeat text-white text-lg"></i>
+            </div>
+            <div>
+              <h1 class="text-lg font-bold text-gray-900 leading-tight">
+                MedExpert
+              </h1>
+              <p
+                class="text-[10px] text-primary-600 font-semibold tracking-widest uppercase"
+              >
+                Search System
+              </p>
+            </div>
+          </div>
+          <div class="hidden md:flex items-center gap-1">
+            <a
+              href="#"
+              onclick="showPage('home')"
+              class="nav-link active px-4 py-2 text-sm font-medium text-gray-700"
+              data-page="home"
+              >Home</a
+            >
+            <a
+              href="#"
+              onclick="showPage('symptom-checker')"
+              class="nav-link px-4 py-2 text-sm font-medium text-gray-700"
+              data-page="symptom-checker"
+              >Symptom Checker</a
+            >
+            <a
+              href="#"
+              onclick="showPage('specialists')"
+              class="nav-link px-4 py-2 text-sm font-medium text-gray-700"
+              data-page="specialists"
+              >Specialists</a
+            >
+            <a
+              href="#"
+              onclick="showPage('hospitals')"
+              class="nav-link px-4 py-2 text-sm font-medium text-gray-700"
+              data-page="hospitals"
+              >Hospitals</a
+            >
+            <a
+              href="#"
+              onclick="showPage('therapy-guide')"
+              class="nav-link px-4 py-2 text-sm font-medium text-gray-700"
+              data-page="therapy-guide"
+              >Therapy Guide</a
+            >
+            <a
+              href="#"
+              onclick="showPage('about')"
+              class="nav-link px-4 py-2 text-sm font-medium text-gray-700"
+              data-page="about"
+              >About</a
+            >
+          </div>
+          <div class="hidden md:block">
+            <button
+              onclick="showPage('book-appointment')"
+              class="btn-primary text-white px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2"
+            >
+              <i class="far fa-calendar-check"></i> Book Appointment
+            </button>
+          </div>
+          <button
+            onclick="toggleMobileMenu()"
+            class="md:hidden p-2 text-gray-600"
+          >
+            <i class="fas fa-bars text-xl"></i>
+          </button>
+        </div>
+      </div>
+      <div
+        id="mobileMenu"
+        class="mobile-menu fixed inset-y-0 right-0 w-72 bg-white shadow-2xl z-50 md:hidden p-6"
+      >
+        <button
+          onclick="toggleMobileMenu()"
+          class="absolute top-4 right-4 text-gray-500"
+        >
+          <i class="fas fa-times text-xl"></i>
+        </button>
+        <div class="mt-12 flex flex-col gap-4">
+          <a
+            href="#"
+            onclick="
+              showPage('home');
+              toggleMobileMenu();
+            "
+            class="text-gray-700 font-medium py-2"
+            >Home</a
+          >
+          <a
+            href="#"
+            onclick="
+              showPage('symptom-checker');
+              toggleMobileMenu();
+            "
+            class="text-gray-700 font-medium py-2"
+            >Symptom Checker</a
+          >
+          <a
+            href="#"
+            onclick="
+              showPage('specialists');
+              toggleMobileMenu();
+            "
+            class="text-gray-700 font-medium py-2"
+            >Specialists</a
+          >
+          <a
+            href="#"
+            onclick="
+              showPage('hospitals');
+              toggleMobileMenu();
+            "
+            class="text-gray-700 font-medium py-2"
+            >Hospitals</a
+          >
+          <a
+            href="#"
+            onclick="
+              showPage('therapy-guide');
+              toggleMobileMenu();
+            "
+            class="text-gray-700 font-medium py-2"
+            >Therapy Guide</a
+          >
+          <a
+            href="#"
+            onclick="
+              showPage('about');
+              toggleMobileMenu();
+            "
+            class="text-gray-700 font-medium py-2"
+            >About</a
+          >
+          <button
+            onclick="
+              showPage('book-appointment');
+              toggleMobileMenu();
+            "
+            class="btn-primary text-white px-5 py-3 rounded-lg text-sm font-semibold mt-4"
+          >
+            <i class="far fa-calendar-check mr-2"></i>Book Appointment
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ==================== HOME PAGE ==================== -->
+    <div id="page-home" class="page-section">
+      <!-- Hero Section -->
+      <section class="gradient-hero relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10">
+          <svg
+            class="w-full h-full"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+          >
+            <path
+              d="M0,50 Q25,30 50,50 T100,50 L100,100 L0,100 Z"
+              fill="white"
+              opacity="0.1"
+            />
+            <path
+              d="M0,60 Q25,40 50,60 T100,60 L100,100 L0,100 Z"
+              fill="white"
+              opacity="0.05"
+            />
+          </svg>
+        </div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+          <div class="grid md:grid-cols-2 gap-12 items-center">
+            <div class="relative z-10">
+              <div
+                class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-6"
+              >
+                <i class="fas fa-stethoscope text-white/80 text-sm"></i>
+                <span class="text-white/90 text-sm font-medium"
+                  >Rule-based medical guidance, built for Nigeria</span
+                >
+              </div>
+              <h1
+                class="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6"
+              >
+                Find the right<br /><span class="text-primary-200"
+                  >doctor, faster.</span
+                >
+              </h1>
+              <p class="text-white/80 text-lg mb-8 max-w-lg">
+                Tell us your symptoms and we will suggest possible conditions,
+                the type of specialist to see, and hospitals across Lagos,
+                Abuja, and beyond.
+              </p>
+              <div class="flex flex-wrap gap-4 mb-8">
+                <button
+                  onclick="showPage('symptom-checker')"
+                  class="bg-white text-primary-700 px-6 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-primary-50 transition-all"
+                >
+                  Start Symptom Analysis
+                  <i class="fas fa-arrow-right text-sm"></i>
+                </button>
+                <button
+                  onclick="showPage('specialists')"
+                  class="btn-outline text-white px-6 py-3 rounded-lg font-semibold"
+                >
+                  Browse Specialists
+                </button>
+              </div>
+              <div class="flex flex-wrap gap-6 text-white/70 text-sm">
+                <span class="flex items-center gap-2"
+                  ><i class="fas fa-check-circle text-white/60"></i> Free to
+                  use</span
+                >
+                <span class="flex items-center gap-2"
+                  ><i class="fas fa-check-circle text-white/60"></i> No sign-up
+                  needed</span
+                >
+                <span class="flex items-center gap-2"
+                  ><i class="fas fa-check-circle text-white/60"></i> Guidance,
+                  not diagnosis</span
+                >
+              </div>
+            </div>
+            <div class="relative">
+              <div
+                class="bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-2xl max-w-md ml-auto"
+              >
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center"
+                    >
+                      <i class="fas fa-heartbeat text-primary-600 text-sm"></i>
+                    </div>
+                    <span class="font-semibold text-gray-800"
+                      >Symptom Preview</span
+                    >
+                  </div>
+                  <span
+                    class="text-xs font-semibold text-red-500 flex items-center gap-1"
+                  >
+                    <span
+                      class="w-2 h-2 rounded-full bg-red-500 pulse-dot"
+                    ></span>
+                    LIVE
+                  </span>
+                </div>
+                <div class="mb-4">
+                  <p
+                    class="text-xs text-gray-500 uppercase tracking-wider mb-2"
+                  >
+                    You Selected
+                  </p>
+                  <div class="flex flex-wrap gap-2">
+                    <span
+                      class="bg-primary-600 text-white text-xs px-3 py-1 rounded-full"
+                      >Headache</span
+                    >
+                    <span
+                      class="bg-primary-600 text-white text-xs px-3 py-1 rounded-full"
+                      >Fever</span
+                    >
+                    <span
+                      class="bg-primary-600 text-white text-xs px-3 py-1 rounded-full"
+                      >Fatigue</span
+                    >
+                  </div>
+                </div>
+                <div class="space-y-3">
+                  <div
+                    class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div>
+                      <p class="font-semibold text-gray-800 text-sm">Malaria</p>
+                      <p class="text-xs text-gray-500">85% match</p>
+                    </div>
+                    <span
+                      class="urgency-high text-xs px-2 py-1 rounded-full font-semibold"
+                      >High</span
+                    >
+                  </div>
+                  <div
+                    class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div>
+                      <p class="font-semibold text-gray-800 text-sm">
+                        Typhoid Fever
+                      </p>
+                      <p class="text-xs text-gray-500">70% match</p>
+                    </div>
+                    <span
+                      class="urgency-moderate text-xs px-2 py-1 rounded-full font-semibold"
+                      >Moderate</span
+                    >
+                  </div>
+                  <div
+                    class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div>
+                      <p class="font-semibold text-gray-800 text-sm">
+                        Viral Infection
+                      </p>
+                      <p class="text-xs text-gray-500">55% match</p>
+                    </div>
+                    <span
+                      class="urgency-low text-xs px-2 py-1 rounded-full font-semibold"
+                      >Low</span
+                    >
+                  </div>
+                </div>
+                <div
+                  class="mt-4 pt-4 border-t border-gray-100 flex items-center gap-2 text-sm text-gray-600"
+                >
+                  <i class="fas fa-user-md text-primary-500"></i
+                  ><span>See a General Practitioner</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            class="grid grid-cols-2 md:grid-cols-4 gap-8 mt-16 pt-12 border-t border-white/10"
+          >
+            <div class="text-center">
+              <p class="text-4xl md:text-5xl font-bold stat-number">30+</p>
+              <p class="text-white/60 text-sm mt-1">Covered Symptoms</p>
+            </div>
+            <div class="text-center">
+              <p class="text-4xl md:text-5xl font-bold stat-number">20+</p>
+              <p class="text-white/60 text-sm mt-1">Medical Conditions</p>
+            </div>
+            <div class="text-center">
+              <p class="text-4xl md:text-5xl font-bold stat-number">12+</p>
+              <p class="text-white/60 text-sm mt-1">Specialist Types</p>
+            </div>
+            <div class="text-center">
+              <p class="text-4xl md:text-5xl font-bold stat-number">15+</p>
+              <p class="text-white/60 text-sm mt-1">Verified Hospitals</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- How It Works Section -->
+      <section class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-center mb-16">
+            <p
+              class="text-primary-600 text-sm font-semibold tracking-widest uppercase mb-3"
+            >
+              How It Works
+            </p>
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Four steps from symptom to care.
+            </h2>
+            <p class="text-gray-500 max-w-2xl mx-auto">
+              We built MedExpert to remove the guesswork around which doctor to
+              see. Here is how it goes.
+            </p>
+          </div>
+          <div class="grid md:grid-cols-4 gap-6">
+            <div
+              class="step-card bg-white rounded-2xl p-6 border border-gray-100"
+            >
+              <div
+                class="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center mb-4"
+              >
+                <i class="fas fa-search text-primary-600 text-lg"></i>
+              </div>
+              <p
+                class="text-xs text-primary-600 font-semibold uppercase tracking-wider mb-2"
+              >
+                Step 1
+              </p>
+              <h3 class="font-bold text-gray-900 mb-2">Enter Your Symptoms</h3>
+              <p class="text-gray-500 text-sm">
+                Select from a curated list of symptoms or type your own.
+              </p>
+            </div>
+            <div
+              class="step-card bg-white rounded-2xl p-6 border border-gray-100"
+            >
+              <div
+                class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center mb-4"
+              >
+                <i class="fas fa-heart-pulse text-red-500 text-lg"></i>
+              </div>
+              <p
+                class="text-xs text-red-500 font-semibold uppercase tracking-wider mb-2"
+              >
+                Step 2
+              </p>
+              <h3 class="font-bold text-gray-900 mb-2">
+                Get Possible Conditions
+              </h3>
+              <p class="text-gray-500 text-sm">
+                Our rule-based engine ranks possible conditions by confidence.
+              </p>
+            </div>
+            <div
+              class="step-card bg-white rounded-2xl p-6 border border-gray-100"
+            >
+              <div
+                class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-4"
+              >
+                <i class="fas fa-user-doctor text-blue-500 text-lg"></i>
+              </div>
+              <p
+                class="text-xs text-blue-500 font-semibold uppercase tracking-wider mb-2"
+              >
+                Step 3
+              </p>
+              <h3 class="font-bold text-gray-900 mb-2">Right Specialist</h3>
+              <p class="text-gray-500 text-sm">
+                The system maps each condition to the right medical specialist.
+              </p>
+            </div>
+            <div
+              class="step-card bg-white rounded-2xl p-6 border border-gray-100"
+            >
+              <div
+                class="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center mb-4"
+              >
+                <i class="fas fa-hospital text-green-500 text-lg"></i>
+              </div>
+              <p
+                class="text-xs text-green-500 font-semibold uppercase tracking-wider mb-2"
+              >
+                Step 4
+              </p>
+              <h3 class="font-bold text-gray-900 mb-2">
+                Find Nearby Hospitals
+              </h3>
+              <p class="text-gray-500 text-sm">
+                See Nigerian hospitals that have your recommended specialist.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Why MedExpert Section -->
+      <section class="py-20 bg-primary-50/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <p
+                class="text-primary-600 text-sm font-semibold tracking-widest uppercase mb-3"
+              >
+                Why MedExpert
+              </p>
+              <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                Built for trustworthy guidance.
+              </h2>
+              <p class="text-gray-500 mb-8">
+                The knowledge base covers conditions that are common in Nigeria,
+                from malaria and typhoid to hypertension and diabetes. Every
+                rule was reviewed against published clinical guidance.
+              </p>
+              <div class="grid grid-cols-2 gap-4">
+                <div
+                  class="feature-badge bg-white rounded-xl p-4 border border-gray-100 flex items-center gap-3"
+                >
+                  <div
+                    class="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center flex-shrink-0"
+                  >
+                    <i class="fas fa-shield-halved text-primary-600"></i>
+                  </div>
+                  <span class="text-sm font-medium text-gray-700"
+                    >Evidence-based rule logic</span
+                  >
+                </div>
+                <div
+                  class="feature-badge bg-white rounded-xl p-4 border border-gray-100 flex items-center gap-3"
+                >
+                  <div
+                    class="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center flex-shrink-0"
+                  >
+                    <i class="fas fa-circle-check text-primary-600"></i>
+                  </div>
+                  <span class="text-sm font-medium text-gray-700"
+                    >Nigerian healthcare context</span
+                  >
+                </div>
+                <div
+                  class="feature-badge bg-white rounded-xl p-4 border border-gray-100 flex items-center gap-3"
+                >
+                  <div
+                    class="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center flex-shrink-0"
+                  >
+                    <i class="fas fa-file-medical text-primary-600"></i>
+                  </div>
+                  <span class="text-sm font-medium text-gray-700"
+                    >Detailed therapy advice</span
+                  >
+                </div>
+                <div
+                  class="feature-badge bg-white rounded-xl p-4 border border-gray-100 flex items-center gap-3"
+                >
+                  <div
+                    class="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center flex-shrink-0"
+                  >
+                    <i class="fas fa-triangle-exclamation text-primary-600"></i>
+                  </div>
+                  <span class="text-sm font-medium text-gray-700"
+                    >Urgency level guidance</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="relative">
+              <div class="rounded-2xl overflow-hidden shadow-2xl">
+                <img
+                  src="https://images.unsplash.com/photo-1551076805-e1869033e561?w=800&h=600&fit=crop"
+                  alt="Medical professionals"
+                  class="w-full h-auto object-cover"
+                />
+              </div>
+              <div
+                class="absolute -bottom-6 -left-6 w-24 h-24 bg-primary-100 rounded-full opacity-50"
+              ></div>
+              <div
+                class="absolute -top-6 -right-6 w-16 h-16 bg-primary-200 rounded-full opacity-30"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CTA Section -->
+      <section class="py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div
+            class="gradient-cta rounded-3xl p-12 md:p-16 text-center relative overflow-hidden"
+          >
+            <div class="relative z-10">
+              <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">
+                Ready to find the right care?
+              </h2>
+              <p class="text-white/80 text-lg mb-8 max-w-xl mx-auto">
+                Start with your symptoms. It takes less than a minute, no
+                account needed.
+              </p>
+              <div class="flex flex-wrap justify-center gap-4">
+                <button
+                  onclick="showPage('symptom-checker')"
+                  class="bg-white text-primary-700 px-8 py-3 rounded-lg font-semibold hover:bg-primary-50 transition-all flex items-center gap-2"
+                >
+                  Start Symptom Analysis <i class="fas fa-arrow-right"></i>
+                </button>
+                <button
+                  onclick="showPage('book-appointment')"
+                  class="btn-outline text-white px-8 py-3 rounded-lg font-semibold"
+                >
+                  Book an Appointment
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==================== SYMPTOM CHECKER PAGE ==================== -->
+    <div id="page-symptom-checker" class="page-section hidden">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="mb-8">
+          <p
+            class="text-primary-600 text-sm font-semibold tracking-widest uppercase mb-2"
+          >
+            Step 1 of 2
+          </p>
+          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+            Symptom Checker
+          </h1>
+          <p class="text-gray-500">
+            Select all symptoms you are currently experiencing, then click
+            Analyze.
+          </p>
+        </div>
+        <div class="relative mb-8">
+          <i
+            class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+          ></i>
+          <input
+            type="text"
+            id="symptomSearch"
+            placeholder="Search symptoms (e.g. headache, fever...)"
+            class="search-input w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 text-gray-700 focus:outline-none"
+            oninput="filterSymptoms(this.value)"
+          />
+        </div>
+        <div id="selectedSymptoms" class="mb-8 hidden">
+          <p class="text-sm font-semibold text-gray-700 mb-3">
+            Selected Symptoms:
+          </p>
+          <div id="selectedChips" class="flex flex-wrap gap-2"></div>
+        </div>
+        <div id="symptomCategories" class="space-y-8">
+          <div class="symptom-category">
+            <h3
+              class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3"
+            >
+              Neurological
+            </h3>
+            <div class="flex flex-wrap gap-2">
+              <button
+                class="symptom-chip px-4 py-2 rounded-full text-sm font-medium text-gray-700 bg-white"
+                onclick="toggleSymptom(this, 'Headache')"
+              >
+                Headache
+              </button>
+              <button
+                class="symptom-chip px-4 py-2 rounded-full text-sm font-medium text-gray-700 bg-white"
+                onclick="toggleSymptom(this, 'Dizziness')"
+              >
+                Dizziness
+              </button>
+              <button
+                class="symptom-chip px-4 py-2 rounded-full text-sm font-medium text-gray-700 bg-white"
+                onclick="toggleSymptom(this, 'Numbness or Tingling')"
+              >
+                Numbness or Tingling
+              </button>
+              <button
+                class="symptom-chip px-4 py-2 rounded-full text-sm font-medium text-gray-700 bg-white"
+                onclick="toggleSymptom(this, 'Memory Problems')"
+              >
+                Memory Problems
+              </button>
+            </div>
+          </div>
+          <div class="symptom-category">
+            <h3
+              class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3"
+            >
+              General
+            </h3>
+            <div class="flex flex-wrap gap-2">
+              <button
+                class="symptom-chip px-4 py-2 rounded-full text-sm font-medium text-gray-700 bg-white"
+                onclick="toggleSymptom(this, 'Fever')"
+              >
+                Fever
+              </button>
+              <button
+                class="symptom-chip px-4 py-2 rounded-full text-sm font-medium text-gray-700 bg-white"
+                onclick="toggleSymptom(this, 'Fatigue')"
+              >
+                Fatigue
+              </button>
+              <button
+                class="symptom-chip px-4 py-2 rounded-full text-sm font-medium text-gray-700 bg-white"
+                onclick="toggleSymptom(this, 'Swollen Lymph Nodes')"
+              >
+                Swollen Lymph Nodes
+              </button>
+              <button
+                class="symptom-chip px-4 py-2 rounded-full text-sm font-medium text-gray-700 bg-white"
+                onclick="toggleSymptom(this, 'Night Sweats')"
+              >
+                Night Sweats
+              </button>
+              <button
+                class="symptom-chip px-4 py-2 rounded-full text-sm font-medium text-gray-700 bg-white"
+                onclick="toggleSymptom(this, 'Weight Loss')"
+              >
+                Weight Loss
+              </button>
+            </div>
+          </div>
+          <div class="symptom-category">
+            <h3
+              class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3"
+            >
+              Cardiovascular
+            </h3>
+            <div class="flex flex-wrap gap-2">
+              <button
+                class="symptom-chip px-4 py-2 rounded-full text-sm font-medium text-gray-700 bg-white"
+                onclick="toggleSymptom(this, 'Chest Pain')"
+              >
+                Chest Pain
+              </button>
+              <button
+                class="symptom-chip px-4 py-2 rounded-full text-sm font-medium text-gray-700 bg-white"
+                onclick="toggleSymptom(this, 'High Blood Pressure')"
+              >
+                High Blood Pressure
+              </button>
+              <button
+                class="symptom-chip px-4 py-2 rounded-full text-sm font-medium text-gray-700 bg-white"
+                onclick="toggleSymptom(this, 'Palpitations')"
+              >
+                Palpitations
+              </button>
+            </div>
+          </div>
+          <div class="symptom-category">
+            <h3
+              class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3"
+            >
+              Respiratory
+            </h3>
+            <div class="flex flex-wrap gap-2">
+              <button
+                class="symptom-chip px-4 py-2 rounded-full text-sm font-medium text-gray-700 bg-white"
+                onclick="toggleSymptom(this, 'Shortness of Breath')"
+              >
+                Shortness of Breath
+              </button>
+              <button
+                class="symptom-chip px-4 py-2 rounded-full text-sm font-medium text-gray-700 bg-white"
+                onclick="toggleSymptom(this, 'Cough')"
+              >
+                Cough
+              </button>
+            </div>
+          </div>
+          <div class="symptom-category">
+            <h3
+              class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3"
+            >
+              Dermatological
+            </h3>
+            <div class="flex flex-wrap gap-2">
+              <button
+                class="symptom-chip px-4 py-2 rounded-full text-sm font-medium text-gray-700 bg-white"
+                onclick="toggleSymptom(this, 'Skin Rash')"
+              >
+                Skin Rash
+              </button>
+              <button
+                class="symptom-chip px-4 py-2 rounded-full text-sm font-medium text-gray-700 bg-white"
+                onclick="toggleSymptom(this, 'Itching')"
+              >
+                Itching
+              </button>
+            </div>
+          </div>
+          <div class="symptom-category">
+            <h3
+              class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3"
+            >
+              Gastrointestinal
+            </h3>
+            <div class="flex flex-wrap gap-2">
+              <button
+                class="symptom-chip px-4 py-2 rounded-full text-sm font-medium text-gray-700 bg-white"
+                onclick="toggleSymptom(this, 'Nausea')"
+              >
+                Nausea
+              </button>
+              <button
+                class="symptom-chip px-4 py-2 rounded-full text-sm font-medium text-gray-700 bg-white"
+                onclick="toggleSymptom(this, 'Vomiting')"
+              >
+                Vomiting
+              </button>
+              <button
+                class="symptom-chip px-4 py-2 rounded-full text-sm font-medium text-gray-700 bg-white"
+                onclick="toggleSymptom(this, 'Diarrhea')"
+              >
+                Diarrhea
+              </button>
+              <button
+                class="symptom-chip px-4 py-2 rounded-full text-sm font-medium text-gray-700 bg-white"
+                onclick="toggleSymptom(this, 'Abdominal Pain')"
+              >
+                Abdominal Pain
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="mt-10 flex justify-center">
+          <button
+            onclick="analyzeSymptoms()"
+            id="analyzeBtn"
+            class="btn-primary text-white px-10 py-4 rounded-xl text-lg font-semibold flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled
+          >
+            <i class="fas fa-microscope"></i> Analyze Symptoms
+          </button>
+        </div>
+      </div>
+      <div
+        id="analysisResults"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4"
+      >
+        <div
+          class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto fade-in"
+        >
+          <div
+            class="p-6 border-b border-gray-100 flex items-center justify-between"
+          >
+            <div>
+              <h2 class="text-xl font-bold text-gray-900">Analysis Results</h2>
+              <p class="text-sm text-gray-500">
+                Based on your selected symptoms
+              </p>
+            </div>
+            <button
+              onclick="closeAnalysis()"
+              class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-all"
+            >
+              <i class="fas fa-times text-gray-600"></i>
+            </button>
+          </div>
+          <div class="p-6">
+            <div id="resultsContent" class="space-y-4"></div>
+            <div
+              class="mt-6 p-4 bg-primary-50 rounded-xl border border-primary-100"
+            >
+              <div class="flex items-start gap-3">
+                <i class="fas fa-circle-info text-primary-600 mt-1"></i>
+                <div>
+                  <p class="font-semibold text-primary-800 text-sm">
+                    Important Notice
+                  </p>
+                  <p class="text-primary-600 text-sm mt-1">
+                    This is guidance only, not a diagnosis. Please consult a
+                    healthcare professional for proper evaluation.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="p-6 border-t border-gray-100 flex gap-3">
+            <button
+              onclick="
+                showPage('specialists');
+                closeAnalysis();
+              "
+              class="flex-1 btn-primary text-white py-3 rounded-lg font-semibold"
+            >
+              Find a Specialist
+            </button>
+            <button
+              onclick="
+                showPage('hospitals');
+                closeAnalysis();
+              "
+              class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-all"
+            >
+              Find Hospitals
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SPECIALISTS PAGE ==================== -->
+    <div id="page-specialists" class="page-section hidden">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="mb-8">
+          <p
+            class="text-primary-600 text-sm font-semibold tracking-widest uppercase mb-2"
+          >
+            Browse by Specialty
+          </p>
+          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+            Medical Specialists
+          </h1>
+          <p class="text-gray-500">
+            Each specialist treats a focused set of conditions. Pick one to see
+            Nigerian hospitals that have them.
+          </p>
+        </div>
+        <div class="relative mb-8 max-w-md">
+          <i
+            class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+          ></i>
+          <input
+            type="text"
+            placeholder="Search specialists or conditions..."
+            class="search-input w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 text-gray-700 focus:outline-none"
+            oninput="filterSpecialists(this.value)"
+          />
+        </div>
+        <div
+          id="specialistsGrid"
+          class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
+          <div class="specialist-card bg-white rounded-2xl p-6">
+            <div
+              class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center mb-4"
+            >
+              <i class="fas fa-heart-pulse text-red-500 text-xl"></i>
+            </div>
+            <h3 class="font-bold text-gray-900 text-lg mb-1">Cardiologist</h3>
+            <p class="text-gray-500 text-sm mb-4">
+              Specialist in heart and blood vessel diseases.
+            </p>
+            <div class="mb-4">
+              <p
+                class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
+              >
+                Treats
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Hypertension</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Coronary Artery Disease</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Heart Failure</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Arrhythmia</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >+1 more</span
+                >
+              </div>
+            </div>
+            <div
+              class="flex items-center justify-between pt-4 border-t border-gray-100"
+            >
+              <span class="text-sm text-gray-500"
+                ><i class="fas fa-hospital text-gray-400 mr-1"></i> 11
+                hospitals</span
+              >
+              <button
+                onclick="showPage('hospitals')"
+                class="text-primary-600 text-sm font-semibold flex items-center gap-1 hover:text-primary-700"
+              >
+                View hospitals <i class="fas fa-arrow-right text-xs"></i>
+              </button>
+            </div>
+          </div>
+          <div class="specialist-card bg-white rounded-2xl p-6">
+            <div
+              class="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center mb-4"
+            >
+              <i class="fas fa-hand-dots text-orange-500 text-xl"></i>
+            </div>
+            <h3 class="font-bold text-gray-900 text-lg mb-1">Dermatologist</h3>
+            <p class="text-gray-500 text-sm mb-4">
+              Expert in skin, hair, and nail conditions.
+            </p>
+            <div class="mb-4">
+              <p
+                class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
+              >
+                Treats
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Eczema</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Psoriasis</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Acne</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Skin Rash</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >+2 more</span
+                >
+              </div>
+            </div>
+            <div
+              class="flex items-center justify-between pt-4 border-t border-gray-100"
+            >
+              <span class="text-sm text-gray-500"
+                ><i class="fas fa-hospital text-gray-400 mr-1"></i> 9
+                hospitals</span
+              >
+              <button
+                onclick="showPage('hospitals')"
+                class="text-primary-600 text-sm font-semibold flex items-center gap-1 hover:text-primary-700"
+              >
+                View hospitals <i class="fas fa-arrow-right text-xs"></i>
+              </button>
+            </div>
+          </div>
+          <div class="specialist-card bg-white rounded-2xl p-6">
+            <div
+              class="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center mb-4"
+            >
+              <i class="fas fa-brain text-purple-500 text-xl"></i>
+            </div>
+            <h3 class="font-bold text-gray-900 text-lg mb-1">Neurologist</h3>
+            <p class="text-gray-500 text-sm mb-4">
+              Specialist in brain, spine, and nervous system disorders.
+            </p>
+            <div class="mb-4">
+              <p
+                class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
+              >
+                Treats
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Migraine</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Epilepsy</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Stroke</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Parkinson's Disease</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >+1 more</span
+                >
+              </div>
+            </div>
+            <div
+              class="flex items-center justify-between pt-4 border-t border-gray-100"
+            >
+              <span class="text-sm text-gray-500"
+                ><i class="fas fa-hospital text-gray-400 mr-1"></i> 13
+                hospitals</span
+              >
+              <button
+                onclick="showPage('hospitals')"
+                class="text-primary-600 text-sm font-semibold flex items-center gap-1 hover:text-primary-700"
+              >
+                View hospitals <i class="fas fa-arrow-right text-xs"></i>
+              </button>
+            </div>
+          </div>
+          <div class="specialist-card bg-white rounded-2xl p-6">
+            <div
+              class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-4"
+            >
+              <i class="fas fa-ear-listen text-blue-500 text-xl"></i>
+            </div>
+            <h3 class="font-bold text-gray-900 text-lg mb-1">ENT Specialist</h3>
+            <p class="text-gray-500 text-sm mb-4">
+              Expert in ear, nose, and throat conditions.
+            </p>
+            <div class="mb-4">
+              <p
+                class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
+              >
+                Treats
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Sinusitis</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Hearing Loss</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Tonsillitis</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >+2 more</span
+                >
+              </div>
+            </div>
+            <div
+              class="flex items-center justify-between pt-4 border-t border-gray-100"
+            >
+              <span class="text-sm text-gray-500"
+                ><i class="fas fa-hospital text-gray-400 mr-1"></i> 10
+                hospitals</span
+              >
+              <button
+                onclick="showPage('hospitals')"
+                class="text-primary-600 text-sm font-semibold flex items-center gap-1 hover:text-primary-700"
+              >
+                View hospitals <i class="fas fa-arrow-right text-xs"></i>
+              </button>
+            </div>
+          </div>
+          <div class="specialist-card bg-white rounded-2xl p-6">
+            <div
+              class="w-12 h-12 rounded-xl bg-yellow-50 flex items-center justify-center mb-4"
+            >
+              <i class="fas fa-wave-square text-yellow-600 text-xl"></i>
+            </div>
+            <h3 class="font-bold text-gray-900 text-lg mb-1">
+              Gastroenterologist
+            </h3>
+            <p class="text-gray-500 text-sm mb-4">
+              Specialist in digestive system disorders.
+            </p>
+            <div class="mb-4">
+              <p
+                class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
+              >
+                Treats
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >GERD</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Ulcers</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >IBS</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >+2 more</span
+                >
+              </div>
+            </div>
+            <div
+              class="flex items-center justify-between pt-4 border-t border-gray-100"
+            >
+              <span class="text-sm text-gray-500"
+                ><i class="fas fa-hospital text-gray-400 mr-1"></i> 8
+                hospitals</span
+              >
+              <button
+                onclick="showPage('hospitals')"
+                class="text-primary-600 text-sm font-semibold flex items-center gap-1 hover:text-primary-700"
+              >
+                View hospitals <i class="fas fa-arrow-right text-xs"></i>
+              </button>
+            </div>
+          </div>
+          <div class="specialist-card bg-white rounded-2xl p-6">
+            <div
+              class="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center mb-4"
+            >
+              <i class="fas fa-user-doctor text-green-500 text-xl"></i>
+            </div>
+            <h3 class="font-bold text-gray-900 text-lg mb-1">
+              General Practitioner
+            </h3>
+            <p class="text-gray-500 text-sm mb-4">
+              Primary care physician for general health concerns.
+            </p>
+            <div class="mb-4">
+              <p
+                class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
+              >
+                Treats
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Common Cold</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Malaria</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Typhoid</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >+5 more</span
+                >
+              </div>
+            </div>
+            <div
+              class="flex items-center justify-between pt-4 border-t border-gray-100"
+            >
+              <span class="text-sm text-gray-500"
+                ><i class="fas fa-hospital text-gray-400 mr-1"></i> 15
+                hospitals</span
+              >
+              <button
+                onclick="showPage('hospitals')"
+                class="text-primary-600 text-sm font-semibold flex items-center gap-1 hover:text-primary-700"
+              >
+                View hospitals <i class="fas fa-arrow-right text-xs"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ==================== HOSPITALS PAGE ==================== -->
+    <div id="page-hospitals" class="page-section hidden">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="mb-8">
+          <p
+            class="text-primary-600 text-sm font-semibold tracking-widest uppercase mb-2"
+          >
+            Find a Hospital
+          </p>
+          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+            Hospitals across Nigeria
+          </h1>
+          <p class="text-gray-500">
+            Search and filter Nigerian hospitals by city, state, or available
+            specialist.
+          </p>
+        </div>
+        <div class="grid md:grid-cols-3 gap-4 mb-8">
+          <div class="relative">
+            <i
+              class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+            ></i>
+            <input
+              type="text"
+              placeholder="Search by name, address, city..."
+              id="hospitalSearch"
+              class="search-input w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 text-gray-700 focus:outline-none"
+              oninput="filterHospitals()"
+            />
+          </div>
+          <select
+            id="stateFilter"
+            onchange="filterHospitals()"
+            class="form-input w-full px-4 py-3 rounded-xl text-gray-700 bg-white"
+          >
+            <option value="">All states</option>
+            <option value="Lagos">Lagos</option>
+            <option value="Abuja">Abuja</option>
+            <option value="Rivers">Rivers</option>
+            <option value="Oyo">Oyo</option>
+          </select>
+          <select
+            id="specialistFilter"
+            onchange="filterHospitals()"
+            class="form-input w-full px-4 py-3 rounded-xl text-gray-700 bg-white"
+          >
+            <option value="">All specialists</option>
+            <option value="Cardiologist">Cardiologist</option>
+            <option value="Dermatologist">Dermatologist</option>
+            <option value="Neurologist">Neurologist</option>
+            <option value="ENT Specialist">ENT Specialist</option>
+            <option value="Gastroenterologist">Gastroenterologist</option>
+            <option value="General Practitioner">General Practitioner</option>
+          </select>
+        </div>
+        <p class="text-sm text-gray-500 mb-6">
+          Showing
+          <span id="hospitalCount" class="font-semibold text-gray-700">15</span>
+          hospitals.
+        </p>
+        <div
+          id="hospitalsGrid"
+          class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
+          <div
+            class="hospital-card bg-white rounded-2xl p-6"
+            data-state="Lagos"
+            data-specialists="Cardiologist,Dermatologist,Neurologist,ENT Specialist,Gastroenterologist"
+          >
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center"
+                >
+                  <i class="fas fa-hospital text-primary-600"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-gray-900 text-sm">
+                    Lagos University Teaching Hospital (LUTH)
+                  </h3>
+                  <span
+                    class="text-xs text-primary-600 font-semibold uppercase tracking-wider"
+                    >Teaching</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="space-y-2 mb-4">
+              <div class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-location-dot text-primary-400 w-4"></i
+                ><span>Idi-Araba, Surulere, Lagos, Lagos</span>
+              </div>
+              <div class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-phone text-primary-400 w-4"></i
+                ><span>0802-345-6789</span>
+              </div>
+              <div class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-envelope text-primary-400 w-4"></i
+                ><span>info@luth.gov.ng</span>
+              </div>
+            </div>
+            <div class="mb-4">
+              <p
+                class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
+              >
+                Specialists (12)
+              </p>
+              <div class="flex flex-wrap gap-1">
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Cardiologist</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Dermatologist</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Neurologist</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >ENT Specialist</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Gastroenterologist</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >+7</span
+                >
+              </div>
+            </div>
+            <button
+              onclick="showPage('book-appointment')"
+              class="w-full btn-primary text-white py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2"
+            >
+              <i class="far fa-calendar-check"></i> Book Appointment
+            </button>
+          </div>
+          <div
+            class="hospital-card bg-white rounded-2xl p-6"
+            data-state="Lagos"
+            data-specialists="Cardiologist,Dermatologist,Neurologist,Gastroenterologist,General Practitioner"
+          >
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center"
+                >
+                  <i class="fas fa-hospital text-primary-600"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-gray-900 text-sm">
+                    Reddington Hospital
+                  </h3>
+                  <span
+                    class="text-xs text-primary-600 font-semibold uppercase tracking-wider"
+                    >Private</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="space-y-2 mb-4">
+              <div class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-location-dot text-primary-400 w-4"></i
+                ><span>12 Isaac John Street, Ikeja GRA, Lagos, Lagos</span>
+              </div>
+              <div class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-phone text-primary-400 w-4"></i
+                ><span>0700-733-3464</span>
+              </div>
+              <div class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-envelope text-primary-400 w-4"></i
+                ><span>info@reddington.com.ng</span>
+              </div>
+            </div>
+            <div class="mb-4">
+              <p
+                class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
+              >
+                Specialists (8)
+              </p>
+              <div class="flex flex-wrap gap-1">
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Cardiologist</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Dermatologist</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Neurologist</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Gastroenterologist</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >General Practitioner</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >+3</span
+                >
+              </div>
+            </div>
+            <button
+              onclick="showPage('book-appointment')"
+              class="w-full btn-primary text-white py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2"
+            >
+              <i class="far fa-calendar-check"></i> Book Appointment
+            </button>
+          </div>
+          <div
+            class="hospital-card bg-white rounded-2xl p-6"
+            data-state="Lagos"
+            data-specialists="Cardiologist,Neurologist,ENT Specialist,Gastroenterologist,General Practitioner"
+          >
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center"
+                >
+                  <i class="fas fa-hospital text-primary-600"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-gray-900 text-sm">
+                    St. Nicholas Hospital
+                  </h3>
+                  <span
+                    class="text-xs text-primary-600 font-semibold uppercase tracking-wider"
+                    >Private</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="space-y-2 mb-4">
+              <div class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-location-dot text-primary-400 w-4"></i
+                ><span>57 Campbell Street, Lagos Island, Lagos, Lagos</span>
+              </div>
+              <div class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-phone text-primary-400 w-4"></i
+                ><span>0816-000-2600</span>
+              </div>
+              <div class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-envelope text-primary-400 w-4"></i
+                ><span>admin@stnicholas.com.ng</span>
+              </div>
+            </div>
+            <div class="mb-4">
+              <p
+                class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
+              >
+                Specialists (6)
+              </p>
+              <div class="flex flex-wrap gap-1">
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Cardiologist</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Neurologist</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >ENT Specialist</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Gastroenterologist</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >General Practitioner</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >+3</span
+                >
+              </div>
+            </div>
+            <button
+              onclick="showPage('book-appointment')"
+              class="w-full btn-primary text-white py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2"
+            >
+              <i class="far fa-calendar-check"></i> Book Appointment
+            </button>
+          </div>
+          <div
+            class="hospital-card bg-white rounded-2xl p-6"
+            data-state="Abuja"
+            data-specialists="Cardiologist,Neurologist,ENT Specialist,Gastroenterologist,General Practitioner"
+          >
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center"
+                >
+                  <i class="fas fa-hospital text-primary-600"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-gray-900 text-sm">
+                    National Hospital Abuja
+                  </h3>
+                  <span
+                    class="text-xs text-primary-600 font-semibold uppercase tracking-wider"
+                    >Government</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="space-y-2 mb-4">
+              <div class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-location-dot text-primary-400 w-4"></i
+                ><span>Central District, Abuja, FCT</span>
+              </div>
+              <div class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-phone text-primary-400 w-4"></i
+                ><span>09-461-4000</span>
+              </div>
+              <div class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-envelope text-primary-400 w-4"></i
+                ><span>info@nationalhospital.gov.ng</span>
+              </div>
+            </div>
+            <div class="mb-4">
+              <p
+                class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
+              >
+                Specialists (10)
+              </p>
+              <div class="flex flex-wrap gap-1">
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Cardiologist</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Neurologist</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >ENT Specialist</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Gastroenterologist</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >General Practitioner</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >+5</span
+                >
+              </div>
+            </div>
+            <button
+              onclick="showPage('book-appointment')"
+              class="w-full btn-primary text-white py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2"
+            >
+              <i class="far fa-calendar-check"></i> Book Appointment
+            </button>
+          </div>
+          <div
+            class="hospital-card bg-white rounded-2xl p-6"
+            data-state="Abuja"
+            data-specialists="Cardiologist,Dermatologist,General Practitioner"
+          >
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center"
+                >
+                  <i class="fas fa-hospital text-primary-600"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-gray-900 text-sm">
+                    Garki Hospital
+                  </h3>
+                  <span
+                    class="text-xs text-primary-600 font-semibold uppercase tracking-wider"
+                    >Government</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="space-y-2 mb-4">
+              <div class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-location-dot text-primary-400 w-4"></i
+                ><span>Garki Area 8, Abuja, FCT</span>
+              </div>
+              <div class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-phone text-primary-400 w-4"></i
+                ><span>09-234-5678</span>
+              </div>
+              <div class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-envelope text-primary-400 w-4"></i
+                ><span>info@garkihospital.gov.ng</span>
+              </div>
+            </div>
+            <div class="mb-4">
+              <p
+                class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
+              >
+                Specialists (5)
+              </p>
+              <div class="flex flex-wrap gap-1">
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Cardiologist</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Dermatologist</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >General Practitioner</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >+2</span
+                >
+              </div>
+            </div>
+            <button
+              onclick="showPage('book-appointment')"
+              class="w-full btn-primary text-white py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2"
+            >
+              <i class="far fa-calendar-check"></i> Book Appointment
+            </button>
+          </div>
+          <div
+            class="hospital-card bg-white rounded-2xl p-6"
+            data-state="Lagos"
+            data-specialists="Cardiologist,Neurologist,ENT Specialist,Dermatologist,General Practitioner"
+          >
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center"
+                >
+                  <i class="fas fa-hospital text-primary-600"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-gray-900 text-sm">
+                    Cedarcrest Hospitals
+                  </h3>
+                  <span
+                    class="text-xs text-primary-600 font-semibold uppercase tracking-wider"
+                    >Private</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="space-y-2 mb-4">
+              <div class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-location-dot text-primary-400 w-4"></i
+                ><span>15A, Thompson Avenue, Ikoyi, Lagos</span>
+              </div>
+              <div class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-phone text-primary-400 w-4"></i
+                ><span>0700-223-3322</span>
+              </div>
+              <div class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-envelope text-primary-400 w-4"></i
+                ><span>info@cedarcrest.com.ng</span>
+              </div>
+            </div>
+            <div class="mb-4">
+              <p
+                class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
+              >
+                Specialists (7)
+              </p>
+              <div class="flex flex-wrap gap-1">
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Cardiologist</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Neurologist</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >ENT Specialist</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >Dermatologist</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >General Practitioner</span
+                >
+                <span
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >+2</span
+                >
+              </div>
+            </div>
+            <button
+              onclick="showPage('book-appointment')"
+              class="w-full btn-primary text-white py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2"
+            >
+              <i class="far fa-calendar-check"></i> Book Appointment
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== THERAPY GUIDE PAGE ==================== -->
+    <div id="page-therapy-guide" class="page-section hidden">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="mb-8">
+          <p
+            class="text-primary-600 text-sm font-semibold tracking-widest uppercase mb-2"
+          >
+            Self-Care Advice
+          </p>
+          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+            Therapy Guide
+          </h1>
+          <p class="text-gray-500">
+            Practical self-care tips for common conditions, with clear signs of
+            when to seek urgent care.
+          </p>
+        </div>
+        <div class="relative mb-8 max-w-md">
+          <i
+            class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+          ></i>
+          <input
+            type="text"
+            placeholder="Search by condition..."
+            class="search-input w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 text-gray-700 focus:outline-none"
+            oninput="filterTherapy(this.value)"
+          />
+        </div>
+        <div id="therapyGrid" class="space-y-6">
+          <div class="therapy-card bg-white rounded-2xl p-6">
+            <div class="flex items-center gap-3 mb-6">
+              <div
+                class="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center"
+              >
+                <i class="fas fa-head-side-virus text-primary-600"></i>
+              </div>
+              <h3 class="font-bold text-gray-900 text-lg">Migraine</h3>
+            </div>
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <div class="flex items-center gap-2 mb-3">
+                  <i class="fas fa-circle-check text-green-500"></i>
+                  <h4 class="font-semibold text-gray-800 text-sm">
+                    Self-Care Steps
+                  </h4>
+                </div>
+                <ul class="space-y-2 text-sm text-gray-600">
+                  <li class="flex items-start gap-2">
+                    <span class="text-green-500 mt-1">•</span
+                    ><span
+                      >Rest in a quiet, dark room away from bright lights and
+                      noise</span
+                    >
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-green-500 mt-1">•</span
+                    ><span
+                      >Apply a cold or warm compress to the forehead or
+                      neck</span
+                    >
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-green-500 mt-1">•</span
+                    ><span
+                      >Stay well hydrated — dehydration can trigger and worsen
+                      migraines</span
+                    >
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-green-500 mt-1">•</span
+                    ><span
+                      >Take over-the-counter pain relievers (e.g. ibuprofen or
+                      paracetamol) at first sign of attack</span
+                    >
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-green-500 mt-1">•</span
+                    ><span
+                      >Avoid known personal triggers such as stress, certain
+                      foods, or lack of sleep</span
+                    >
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-green-500 mt-1">•</span
+                    ><span
+                      >Maintain a regular sleep schedule and meal times</span
+                    >
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <div class="flex items-center gap-2 mb-3">
+                  <i class="fas fa-triangle-exclamation text-red-500"></i>
+                  <h4 class="font-semibold text-gray-800 text-sm">
+                    Seek Urgent Care If
+                  </h4>
+                </div>
+                <ul class="space-y-2 text-sm text-gray-600">
+                  <li class="flex items-start gap-2">
+                    <span class="text-red-500 mt-1">•</span
+                    ><span
+                      >The headache is the worst of your life (sudden,
+                      thunderclap onset)</span
+                    >
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-red-500 mt-1">•</span
+                    ><span
+                      >Headache is accompanied by fever, stiff neck, or
+                      confusion</span
+                    >
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-red-500 mt-1">•</span
+                    ><span
+                      >You experience vision loss, weakness, or difficulty
+                      speaking</span
+                    >
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-red-500 mt-1">•</span
+                    ><span>Headache follows a head injury</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-red-500 mt-1">•</span
+                    ><span
+                      >Over-the-counter medications provide no relief after 2
+                      days</span
+                    >
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div
+              class="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-500"
+            >
+              <i class="fas fa-info-circle text-primary-400 mr-1"></i> Migraines
+              are manageable but a neurologist can prescribe preventive and
+              acute medications.
+            </div>
+          </div>
+          <div class="therapy-card bg-white rounded-2xl p-6">
+            <div class="flex items-center gap-3 mb-6">
+              <div
+                class="w-10 h-10 rounded-lg bg-yellow-50 flex items-center justify-center"
+              >
+                <i class="fas fa-temperature-high text-yellow-600"></i>
+              </div>
+              <h3 class="font-bold text-gray-900 text-lg">Malaria</h3>
+            </div>
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <div class="flex items-center gap-2 mb-3">
+                  <i class="fas fa-circle-check text-green-500"></i>
+                  <h4 class="font-semibold text-gray-800 text-sm">
+                    Self-Care Steps
+                  </h4>
+                </div>
+                <ul class="space-y-2 text-sm text-gray-600">
+                  <li class="flex items-start gap-2">
+                    <span class="text-green-500 mt-1">•</span
+                    ><span>Rest and avoid strenuous activities</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-green-500 mt-1">•</span
+                    ><span>Drink plenty of fluids to prevent dehydration</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-green-500 mt-1">•</span
+                    ><span
+                      >Use mosquito nets and insect repellent to prevent
+                      spread</span
+                    >
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-green-500 mt-1">•</span
+                    ><span
+                      >Take antimalarial medications as prescribed by a
+                      doctor</span
+                    >
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-green-500 mt-1">•</span
+                    ><span>Monitor temperature regularly</span>
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <div class="flex items-center gap-2 mb-3">
+                  <i class="fas fa-triangle-exclamation text-red-500"></i>
+                  <h4 class="font-semibold text-gray-800 text-sm">
+                    Seek Urgent Care If
+                  </h4>
+                </div>
+                <ul class="space-y-2 text-sm text-gray-600">
+                  <li class="flex items-start gap-2">
+                    <span class="text-red-500 mt-1">•</span
+                    ><span>High fever persists beyond 48 hours</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-red-500 mt-1">•</span
+                    ><span
+                      >Severe vomiting or inability to keep fluids down</span
+                    >
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-red-500 mt-1">•</span
+                    ><span>Confusion, seizures, or loss of consciousness</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-red-500 mt-1">•</span
+                    ><span>Jaundice (yellowing of skin or eyes)</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-red-500 mt-1">•</span
+                    ><span>Severe weakness or difficulty breathing</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div
+              class="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-500"
+            >
+              <i class="fas fa-info-circle text-primary-400 mr-1"></i> Malaria
+              requires prompt medical treatment. See a General Practitioner
+              immediately.
+            </div>
+          </div>
+          <div class="therapy-card bg-white rounded-2xl p-6">
+            <div class="flex items-center gap-3 mb-6">
+              <div
+                class="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center"
+              >
+                <i class="fas fa-heart-pulse text-red-500"></i>
+              </div>
+              <h3 class="font-bold text-gray-900 text-lg">Hypertension</h3>
+            </div>
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <div class="flex items-center gap-2 mb-3">
+                  <i class="fas fa-circle-check text-green-500"></i>
+                  <h4 class="font-semibold text-gray-800 text-sm">
+                    Self-Care Steps
+                  </h4>
+                </div>
+                <ul class="space-y-2 text-sm text-gray-600">
+                  <li class="flex items-start gap-2">
+                    <span class="text-green-500 mt-1">•</span
+                    ><span>Reduce salt intake in your diet</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-green-500 mt-1">•</span
+                    ><span>Exercise regularly (at least 30 minutes daily)</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-green-500 mt-1">•</span
+                    ><span>Maintain a healthy weight</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-green-500 mt-1">•</span
+                    ><span>Limit alcohol consumption and quit smoking</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-green-500 mt-1">•</span
+                    ><span>Manage stress through relaxation techniques</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-green-500 mt-1">•</span
+                    ><span>Monitor blood pressure regularly at home</span>
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <div class="flex items-center gap-2 mb-3">
+                  <i class="fas fa-triangle-exclamation text-red-500"></i>
+                  <h4 class="font-semibold text-gray-800 text-sm">
+                    Seek Urgent Care If
+                  </h4>
+                </div>
+                <ul class="space-y-2 text-sm text-gray-600">
+                  <li class="flex items-start gap-2">
+                    <span class="text-red-500 mt-1">•</span
+                    ><span>Blood pressure reading above 180/120 mmHg</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-red-500 mt-1">•</span
+                    ><span
+                      >Severe headache, chest pain, or shortness of breath</span
+                    >
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-red-500 mt-1">•</span
+                    ><span>Vision changes or confusion</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-red-500 mt-1">•</span
+                    ><span>Numbness or weakness on one side of the body</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-red-500 mt-1">•</span
+                    ><span>Difficulty speaking or understanding speech</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div
+              class="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-500"
+            >
+              <i class="fas fa-info-circle text-primary-400 mr-1"></i>
+              Hypertension is a chronic condition requiring ongoing management.
+              See a Cardiologist.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== BOOK APPOINTMENT PAGE ==================== -->
+    <div id="page-book-appointment" class="page-section hidden">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <button
+          onclick="showPage('home')"
+          class="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-6 transition-colors"
+        >
+          <i class="fas fa-arrow-left text-sm"></i> Back
+        </button>
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+          Book an Appointment
+        </h1>
+        <p class="text-gray-500 mb-8">
+          Fill in your details and we will send your request to the hospital.
+          They will contact you to confirm.
+        </p>
+        <form
+          id="appointmentForm"
+          onsubmit="submitAppointment(event)"
+          class="space-y-6"
+        >
+          <div class="bg-white rounded-2xl p-6 border border-gray-100">
+            <div class="flex items-center gap-2 mb-4">
+              <i class="fas fa-user text-primary-600"></i>
+              <h3 class="font-semibold text-gray-900">Your Details</h3>
+            </div>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Full Name <span class="text-red-500">*</span></label
+                >
+                <input
+                  type="text"
+                  id="apptFullName"
+                  required
+                  placeholder="e.g. Chioma Okonkwo"
+                  class="form-input w-full px-4 py-3 rounded-xl text-gray-700"
+                />
+              </div>
+              <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1"
+                    >Phone Number <span class="text-red-500">*</span></label
+                  >
+                  <input
+                    type="tel"
+                    id="apptPhone"
+                    required
+                    placeholder="+234 801 234 5678"
+                    class="form-input w-full px-4 py-3 rounded-xl text-gray-700"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1"
+                    >Email <span class="text-gray-400">(optional)</span></label
+                  >
+                  <input
+                    type="email"
+                    id="apptEmail"
+                    placeholder="you@example.com"
+                    class="form-input w-full px-4 py-3 rounded-xl text-gray-700"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-2xl p-6 border border-gray-100">
+            <div class="flex items-center gap-2 mb-4">
+              <i class="fas fa-hospital text-primary-600"></i>
+              <h3 class="font-semibold text-gray-900">Hospital & Specialist</h3>
+            </div>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Hospital <span class="text-red-500">*</span></label
+                >
+                <select
+                  id="apptHospital"
+                  required
+                  class="form-input w-full px-4 py-3 rounded-xl text-gray-700 bg-white"
+                >
+                  <option value="">Choose a hospital</option>
+                  <option value="luth">
+                    Lagos University Teaching Hospital (LUTH)
+                  </option>
+                  <option value="reddington">Reddington Hospital</option>
+                  <option value="stnicholas">St. Nicholas Hospital</option>
+                  <option value="national">National Hospital Abuja</option>
+                  <option value="garki">Garki Hospital</option>
+                  <option value="cedarcrest">Cedarcrest Hospitals</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Specialist <span class="text-red-500">*</span></label
+                >
+                <select
+                  id="apptSpecialist"
+                  required
+                  class="form-input w-full px-4 py-3 rounded-xl text-gray-700 bg-white"
+                >
+                  <option value="">Choose a specialist</option>
+                  <option value="cardiologist">Cardiologist</option>
+                  <option value="dermatologist">Dermatologist</option>
+                  <option value="neurologist">Neurologist</option>
+                  <option value="ent">ENT Specialist</option>
+                  <option value="gastro">Gastroenterologist</option>
+                  <option value="gp">General Practitioner</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-2xl p-6 border border-gray-100">
+            <div class="flex items-center gap-2 mb-4">
+              <i class="fas fa-calendar text-primary-600"></i>
+              <h3 class="font-semibold text-gray-900">Preferred Date & Time</h3>
+            </div>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Preferred Date <span class="text-red-500">*</span></label
+                >
+                <input
+                  type="date"
+                  id="apptDate"
+                  required
+                  class="form-input w-full px-4 py-3 rounded-xl text-gray-700"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Preferred Time <span class="text-red-500">*</span></label
+                >
+                <select
+                  id="apptTimeSlot"
+                  required
+                  class="form-input w-full px-4 py-3 rounded-xl text-gray-700 bg-white"
+                >
+                  <option value="">Select time</option>
+                  <option value="morning">Morning (8AM - 12PM)</option>
+                  <option value="afternoon">Afternoon (12PM - 4PM)</option>
+                  <option value="evening">Evening (4PM - 6PM)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-2xl p-6 border border-gray-100">
+            <div class="flex items-center gap-2 mb-4">
+              <i class="fas fa-comment-medical text-primary-600"></i>
+              <h3 class="font-semibold text-gray-900">Additional Notes</h3>
+            </div>
+            <textarea
+              id="apptNotes"
+              rows="3"
+              placeholder="Briefly describe your symptoms or reason for visit..."
+              class="form-input w-full px-4 py-3 rounded-xl text-gray-700 resize-none"
+            ></textarea>
+          </div>
+          <button
+            type="submit"
+            class="w-full btn-primary text-white py-4 rounded-xl text-lg font-semibold flex items-center justify-center gap-2"
+          >
+            <i class="far fa-paper-plane"></i> Submit Appointment Request
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ==================== ABOUT PAGE ==================== -->
+    <div id="page-about" class="page-section hidden">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="text-center mb-12">
+          <div
+            class="w-20 h-20 rounded-full bg-gradient-to-br from-primary-600 to-primary-400 flex items-center justify-center mx-auto mb-6"
+          >
+            <i class="fas fa-heartbeat text-white text-3xl"></i>
+          </div>
+          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            About MedExpert
+          </h1>
+          <p class="text-gray-500 max-w-2xl mx-auto">
+            A rule-based medical guidance system designed to help Nigerians find
+            the right care, faster.
+          </p>
+        </div>
+
+        <div class="image-container">
+          <div class="left">
+            <img
+              src="./Asset/WhatsApp Image 2026-06-26 at 11.39.05.jpeg"
+              alt=""
+            />
+          </div>
+          <div class="right">
+            <p>
+              I am Maryam, a Computer Scientist with a strong interest in design
+              systems and full project development. MedExpert is my final year
+              project, built around a real and pressing problem in healthcare
+              accessibility in Nigeria. In many cases, the challenge in Nigerian
+              healthcare is not the absence of doctors, but knowing where to
+              begin. Patients often struggle with identifying the right
+              hospital, choosing the correct specialist, or seeking help early
+              enough before conditions worsen. This delay or misdirection can
+              lead to avoidable complications. MedExpert is designed to bridge
+              that gap by providing a clear and guided starting point. Users can
+              describe their symptoms, and the system suggests possible
+              conditions, recommends the appropriate type of specialist, and
+              helps locate Nigerian hospitals where such specialists are
+              available. It also provides basic self-care guidance while users
+              wait to see a medical professional.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8 mb-12">
+          <div class="bg-white rounded-2xl p-6 border border-gray-100">
+            <h3 class="font-bold text-gray-900 text-lg mb-3">Our Mission</h3>
+            <p class="text-gray-500 text-sm">
+              To democratize access to medical guidance by providing
+              evidence-based, culturally relevant health information that helps
+              Nigerians make informed decisions about their care.
+            </p>
+          </div>
+          <div class="bg-white rounded-2xl p-6 border border-gray-100">
+            <h3 class="font-bold text-gray-900 text-lg mb-3">How It Works</h3>
+            <p class="text-gray-500 text-sm">
+              Our rule-based engine maps symptoms to possible conditions using
+              clinically reviewed guidelines, then recommends the appropriate
+              specialist and nearby hospitals with verified availability.
+            </p>
+          </div>
+          <div class="bg-white rounded-2xl p-6 border border-gray-100">
+            <h3 class="font-bold text-gray-900 text-lg mb-3">Data Sources</h3>
+            <p class="text-gray-500 text-sm">
+              All medical rules are reviewed against published clinical
+              guidelines, WHO recommendations, and Nigerian healthcare protocols
+              to ensure accuracy and relevance.
+            </p>
+          </div>
+          <div class="bg-white rounded-2xl p-6 border border-gray-100">
+            <h3 class="font-bold text-gray-900 text-lg mb-3">Disclaimer</h3>
+            <p class="text-gray-500 text-sm">
+              MedExpert provides guidance, not diagnosis. Always consult a
+              qualified healthcare professional for medical advice, diagnosis,
+              and treatment.
+            </p>
+          </div>
+        </div>
+        <div class="bg-primary-50 rounded-2xl p-8 text-center">
+          <h3 class="font-bold text-gray-900 text-xl mb-4">Contact Us</h3>
+          <div
+            class="flex flex-wrap justify-center gap-6 text-sm text-gray-600"
+          >
+            <span class="flex items-center gap-2"
+              ><i class="fas fa-phone text-primary-500"></i> +234 902 967
+              5083</span
+            >
+            <span class="flex items-center gap-2"
+              ><i class="fas fa-phone text-primary-500"></i> +234 703 360
+              6913</span
+            >
+            <span class="flex items-center gap-2"
+              ><i class="fas fa-envelope text-primary-500"></i>
+              workwithmyrie@gmail.com</span
+            >
+            <span class="flex items-center gap-2"
+              ><i class="fas fa-location-dot text-primary-500"></i>
+              Nigeria</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== ADMIN PAGE ==================== -->
+    <div id="page-admin" class="page-section hidden">
+      <div
+        class="min-h-screen flex items-center justify-center bg-gray-50 px-4"
+      >
+        <div
+          class="admin-card bg-white rounded-2xl p-8 w-full max-w-md text-center"
+        >
+          <div
+            class="w-16 h-16 rounded-full bg-primary-50 flex items-center justify-center mx-auto mb-4"
+          >
+            <i class="fas fa-lock text-primary-600 text-2xl"></i>
+          </div>
+          <h2 class="text-2xl font-bold text-gray-900 mb-2">Admin Panel</h2>
+          <p class="text-gray-500 text-sm mb-6">
+            Enter your admin email and password to continue.
+          </p>
+          <form onsubmit="adminLogin(event)" class="space-y-4">
+            <div>
+              <input
+                type="email"
+                id="adminEmail"
+                placeholder="Admin email"
+                class="form-input w-full px-4 py-3 rounded-xl text-gray-700"
+              />
+            </div>
+            <div class="relative">
+              <input
+                type="password"
+                id="adminPassword"
+                placeholder="Enter password"
+                class="form-input w-full px-4 py-3 rounded-xl text-gray-700 pr-10"
+              />
+              <button
+                type="button"
+                onclick="togglePassword()"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <i class="fas fa-eye" id="eyeIcon"></i>
+              </button>
+            </div>
+            <button
+              type="submit"
+              class="w-full btn-primary text-white py-3 rounded-xl font-semibold"
+            >
+              Sign In
+            </button>
+          </form>
+          <p id="adminError" class="text-red-500 text-sm mt-4 hidden">
+            Incorrect password. Please try again.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Dashboard (hidden until login) -->
+    <div id="page-admin-dashboard" class="page-section hidden">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="flex items-center justify-between mb-8">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+            <p class="text-gray-500">
+              Manage hospitals, specialists, and system settings.
+            </p>
+          </div>
+          <button
+            onclick="adminLogout()"
+            class="text-red-500 font-semibold flex items-center gap-2 hover:text-red-700"
+          >
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </button>
+        </div>
+        <div class="grid md:grid-cols-4 gap-6 mb-8">
+          <div class="bg-white rounded-2xl p-6 border border-gray-100">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-gray-500 text-sm">Total Hospitals</span>
+              <div
+                class="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center"
+              >
+                <i class="fas fa-hospital text-primary-600"></i>
+              </div>
+            </div>
+            <p class="text-3xl font-bold text-gray-900" id="statTotalHospitals">15</p>
+          </div>
+          <div class="bg-white rounded-2xl p-6 border border-gray-100">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-gray-500 text-sm">Specialists</span>
+              <div
+                class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center"
+              >
+                <i class="fas fa-user-doctor text-blue-500"></i>
+              </div>
+            </div>
+            <p class="text-3xl font-bold text-gray-900" id="statTotalSpecialists">12</p>
+          </div>
+          <div class="bg-white rounded-2xl p-6 border border-gray-100">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-gray-500 text-sm">Appointments</span>
+              <div
+                class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center"
+              >
+                <i class="fas fa-calendar-check text-green-500"></i>
+              </div>
+            </div>
+            <p class="text-3xl font-bold text-gray-900" id="statTotalAppointments">248</p>
+          </div>
+          <div class="bg-white rounded-2xl p-6 border border-gray-100">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-gray-500 text-sm">Symptom Checks</span>
+              <div
+                class="w-10 h-10 rounded-lg bg-yellow-50 flex items-center justify-center"
+              >
+                <i class="fas fa-search text-yellow-600"></i>
+              </div>
+            </div>
+            <p class="text-3xl font-bold text-gray-900" id="statTotalSymptomChecks">1,847</p>
+          </div>
+        </div>
+        <div
+          class="bg-white rounded-2xl border border-gray-100 overflow-hidden"
+        >
+          <div
+            class="p-6 border-b border-gray-100 flex items-center justify-between"
+          >
+            <h3 class="font-bold text-gray-900">Recent Appointments</h3>
+            <button class="text-primary-600 text-sm font-semibold">
+              View All
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th
+                    class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                  >
+                    Patient
+                  </th>
+                  <th
+                    class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                  >
+                    Hospital
+                  </th>
+                  <th
+                    class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                  >
+                    Specialist
+                  </th>
+                  <th
+                    class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                  >
+                    Date
+                  </th>
+                  <th
+                    class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                  >
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr>
+                  <td class="px-6 py-4 text-sm text-gray-900">
+                    Chioma Okonkwo
+                  </td>
+                  <td class="px-6 py-4 text-sm text-gray-600">LUTH</td>
+                  <td class="px-6 py-4 text-sm text-gray-600">Cardiologist</td>
+                  <td class="px-6 py-4 text-sm text-gray-600">Jun 28, 2026</td>
+                  <td class="px-6 py-4">
+                    <span
+                      class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-semibold"
+                      >Pending</span
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td class="px-6 py-4 text-sm text-gray-900">Abdul Ibrahim</td>
+                  <td class="px-6 py-4 text-sm text-gray-600">
+                    Reddington Hospital
+                  </td>
+                  <td class="px-6 py-4 text-sm text-gray-600">Neurologist</td>
+                  <td class="px-6 py-4 text-sm text-gray-600">Jun 27, 2026</td>
+                  <td class="px-6 py-4">
+                    <span
+                      class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-semibold"
+                      >Confirmed</span
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td class="px-6 py-4 text-sm text-gray-900">Fatima Bello</td>
+                  <td class="px-6 py-4 text-sm text-gray-600">
+                    National Hospital Abuja
+                  </td>
+                  <td class="px-6 py-4 text-sm text-gray-600">
+                    General Practitioner
+                  </td>
+                  <td class="px-6 py-4 text-sm text-gray-600">Jun 26, 2026</td>
+                  <td class="px-6 py-4">
+                    <span
+                      class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-semibold"
+                      >Confirmed</span
+                    >
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer-dark text-white py-16">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid md:grid-cols-4 gap-12 mb-12">
+          <div>
+            <div class="flex items-center gap-3 mb-4">
+              <div
+                class="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center"
+              >
+                <i class="fas fa-heartbeat text-white text-lg"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-bold">MedExpert</h3>
+                <p
+                  class="text-[10px] text-primary-300 font-semibold tracking-widest uppercase"
+                >
+                  Search System
+                </p>
+              </div>
+            </div>
+            <p class="text-gray-400 text-sm mb-4">
+              Find the right care, faster. Built for the Nigerian healthcare
+              context.
+            </p>
+          </div>
+          <div>
+            <h4
+              class="text-sm font-semibold uppercase tracking-wider text-gray-300 mb-4"
+            >
+              Quick Links
+            </h4>
+            <ul class="space-y-2 text-sm text-gray-400">
+              <li>
+                <a
+                  href="#"
+                  onclick="showPage('home')"
+                  class="hover:text-white transition-colors"
+                  >Home</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#"
+                  onclick="showPage('symptom-checker')"
+                  class="hover:text-white transition-colors"
+                  >Symptom Checker</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#"
+                  onclick="showPage('specialists')"
+                  class="hover:text-white transition-colors"
+                  >Specialists</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#"
+                  onclick="showPage('hospitals')"
+                  class="hover:text-white transition-colors"
+                  >Hospitals</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#"
+                  onclick="showPage('therapy-guide')"
+                  class="hover:text-white transition-colors"
+                  >Therapy Guide</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4
+              class="text-sm font-semibold uppercase tracking-wider text-gray-300 mb-4"
+            >
+              Resources
+            </h4>
+            <ul class="space-y-2 text-sm text-gray-400">
+              <li>
+                <a
+                  href="#"
+                  onclick="showPage('about')"
+                  class="hover:text-white transition-colors"
+                  >About</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#"
+                  onclick="showPage('book-appointment')"
+                  class="hover:text-white transition-colors"
+                  >Book Appointment</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#"
+                  onclick="showPage('admin')"
+                  class="hover:text-white transition-colors"
+                  >Admin</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4
+              class="text-sm font-semibold uppercase tracking-wider text-gray-300 mb-4"
+            >
+              Contact
+            </h4>
+            <ul class="space-y-3 text-sm text-gray-400">
+              <li class="flex items-center gap-2">
+                <i class="fas fa-phone text-primary-400"></i> +234 902 967 5083
+              </li>
+              <li class="flex items-center gap-2">
+                <i class="fas fa-phone text-primary-400"></i> +234 703 360 6913
+              </li>
+              <li class="flex items-center gap-2">
+                <i class="fas fa-envelope text-primary-400"></i>
+                workwithmyrie@gmail.com
+              </li>
+              <li class="flex items-center gap-2">
+                <i class="fas fa-location-dot text-primary-400"></i> Nigeria
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div
+          class="border-t border-gray-700 pt-8 text-center text-sm text-gray-500"
+        >
+          <p>MedExpert Search System. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Appointment Success Modal -->
+    <div
+      id="successModal"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4"
+    >
+      <div class="bg-white rounded-2xl max-w-md w-full p-8 text-center fade-in">
+        <div
+          class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4"
+        >
+          <i class="fas fa-check text-green-500 text-2xl"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">
+          Appointment Requested!
+        </h2>
+        <p class="text-gray-500 mb-6">
+          Your appointment request has been sent. The hospital will contact you
+          shortly to confirm.
+        </p>
+        <button
+          onclick="closeSuccessModal()"
+          class="btn-primary text-white px-8 py-3 rounded-lg font-semibold"
+        >
+          Done
+        </button>
+      </div>
+    </div>
+
+    <!-- ==================== AI CHAT WIDGET ==================== -->
+    <button
+      id="chatFab"
+      class="chat-fab"
+      onclick="toggleChat()"
+      aria-label="Open MedExpert AI Assistant"
+    >
+      <i class="fas fa-comment-medical" id="chatFabIcon"></i>
+      <span class="chat-fab-badge"></span>
+    </button>
+
+    <div id="chatWindow" class="chat-window" role="dialog" aria-label="MedExpert AI Assistant chat">
+      <div class="chat-window-header">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">
+            <i class="fas fa-heartbeat text-white"></i>
+          </div>
+          <div>
+            <p class="font-semibold text-sm leading-tight">MedExpert Assistant</p>
+            <p class="text-[11px] text-white/70 flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-green-400 pulse-dot"></span>
+              Online
+            </p>
+          </div>
+        </div>
+        <button onclick="toggleChat()" class="text-white/80 hover:text-white transition-colors" aria-label="Close chat">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div id="chatBody" class="chat-window-body">
+        <div class="chat-bubble bot">
+          Hi! I'm the MedExpert assistant. I can help you find symptoms, specialists, hospitals, or guide you to book an appointment. What do you need?
+        </div>
+      </div>
+      <div id="chatQuickReplies" class="chat-quick-replies">
+        <button class="chat-quick-reply" onclick="sendChatQuickReply('Check my symptoms')">Check symptoms</button>
+        <button class="chat-quick-reply" onclick="sendChatQuickReply('Find a specialist')">Find a specialist</button>
+        <button class="chat-quick-reply" onclick="sendChatQuickReply('Find a hospital')">Find a hospital</button>
+        <button class="chat-quick-reply" onclick="sendChatQuickReply('Book an appointment')">Book appointment</button>
+      </div>
+      <form class="chat-window-footer" onsubmit="handleChatSubmit(event)">
+        <input
+          type="text"
+          id="chatInput"
+          placeholder="Type a message…"
+          autocomplete="off"
+        />
+        <button type="submit" aria-label="Send message">
+          <i class="fas fa-paper-plane text-sm"></i>
+        </button>
+      </form>
+    </div>
+
+    <script>
+      // Global state
+      let selectedSymptoms = [];
+
+      // Navigation
+      function showPage(pageName) {
+        // Hide all pages
+        document.querySelectorAll(".page-section").forEach((section) => {
+          section.classList.add("hidden");
+        });
+
+        // Show selected page
+        const targetPage = document.getElementById("page-" + pageName);
+        if (targetPage) {
+          targetPage.classList.remove("hidden");
+          targetPage.classList.add("fade-in");
+        }
+
+        // Update nav active state
+        document.querySelectorAll(".nav-link").forEach((link) => {
+          link.classList.remove("active");
+          if (link.dataset.page === pageName) {
+            link.classList.add("active");
+          }
+        });
+
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      function toggleMobileMenu() {
+        document.getElementById("mobileMenu").classList.toggle("open");
+      }
+
+      // Symptom Checker
+      function toggleSymptom(element, symptom) {
+        element.classList.toggle("selected");
+        if (selectedSymptoms.includes(symptom)) {
+          selectedSymptoms = selectedSymptoms.filter((s) => s !== symptom);
+        } else {
+          selectedSymptoms.push(symptom);
+        }
+        updateSelectedSymptoms();
+        document.getElementById("analyzeBtn").disabled =
+          selectedSymptoms.length === 0;
+      }
+
+      function updateSelectedSymptoms() {
+        const container = document.getElementById("selectedSymptoms");
+        const chips = document.getElementById("selectedChips");
+        if (selectedSymptoms.length > 0) {
+          container.classList.remove("hidden");
+          chips.innerHTML = selectedSymptoms
+            .map(
+              (s) =>
+                `<span class="bg-primary-600 text-white text-sm px-3 py-1 rounded-full flex items-center gap-2">${s} <button onclick="removeSymptom('${s}')" class="hover:text-primary-200"><i class="fas fa-times text-xs"></i></button></span>`,
+            )
+            .join("");
+        } else {
+          container.classList.add("hidden");
+        }
+      }
+
+      function removeSymptom(symptom) {
+        selectedSymptoms = selectedSymptoms.filter((s) => s !== symptom);
+        document.querySelectorAll(".symptom-chip").forEach((chip) => {
+          if (chip.textContent.trim() === symptom) {
+            chip.classList.remove("selected");
+          }
+        });
+        updateSelectedSymptoms();
+        document.getElementById("analyzeBtn").disabled =
+          selectedSymptoms.length === 0;
+      }
+
+      function filterSymptoms(query) {
+        const categories = document.querySelectorAll(".symptom-category");
+        categories.forEach((category) => {
+          const chips = category.querySelectorAll(".symptom-chip");
+          let hasMatch = false;
+          chips.forEach((chip) => {
+            if (chip.textContent.toLowerCase().includes(query.toLowerCase())) {
+              chip.style.display = "";
+              hasMatch = true;
+            } else {
+              chip.style.display = "none";
+            }
+          });
+          category.style.display = hasMatch ? "" : "none";
+        });
+      }
+
+      function analyzeSymptoms() {
+        const results = {
+          "Headache,Fever,Fatigue": [
+            {
+              name: "Malaria",
+              match: 85,
+              urgency: "high",
+              specialist: "General Practitioner",
+            },
+            {
+              name: "Typhoid Fever",
+              match: 70,
+              urgency: "moderate",
+              specialist: "General Practitioner",
+            },
+            {
+              name: "Viral Infection",
+              match: 55,
+              urgency: "low",
+              specialist: "General Practitioner",
+            },
+          ],
+          "Chest Pain,Shortness of Breath": [
+            {
+              name: "Angina",
+              match: 80,
+              urgency: "high",
+              specialist: "Cardiologist",
+            },
+            {
+              name: "Heart Attack",
+              match: 75,
+              urgency: "high",
+              specialist: "Cardiologist",
+            },
+            {
+              name: "Pneumonia",
+              match: 60,
+              urgency: "moderate",
+              specialist: "General Practitioner",
+            },
+          ],
+          "Skin Rash,Itching": [
+            {
+              name: "Eczema",
+              match: 75,
+              urgency: "low",
+              specialist: "Dermatologist",
+            },
+            {
+              name: "Allergic Reaction",
+              match: 70,
+              urgency: "moderate",
+              specialist: "Dermatologist",
+            },
+            {
+              name: "Fungal Infection",
+              match: 65,
+              urgency: "low",
+              specialist: "Dermatologist",
+            },
+          ],
+          default: [
+            {
+              name: "General Consultation Recommended",
+              match: 50,
+              urgency: "low",
+              specialist: "General Practitioner",
+            },
+          ],
+        };
+
+        let key = selectedSymptoms.join(",");
+        let resultList = results[key] || results["default"];
+
+        const content = document.getElementById("resultsContent");
+        content.innerHTML = resultList
+          .map(
+            (r) => `
+        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+            <div>
+                <p class="font-semibold text-gray-800">${r.name}</p>
+                <p class="text-sm text-gray-500">${r.match}% match</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="urgency-${r.urgency} text-xs px-2 py-1 rounded-full font-semibold capitalize">${r.urgency}</span>
+                <span class="text-sm text-gray-600"><i class="fas fa-user-md text-primary-400 mr-1"></i>${r.specialist}</span>
+            </div>
+        </div>
+    `,
+          )
+          .join("");
+
+        document.getElementById("analysisResults").classList.remove("hidden");
+      }
+
+      function closeAnalysis() {
+        document.getElementById("analysisResults").classList.add("hidden");
+      }
+
+      // Specialists
+      function filterSpecialists(query) {
+        const cards = document.querySelectorAll(
+          "#specialistsGrid .specialist-card",
+        );
+        cards.forEach((card) => {
+          const text = card.textContent.toLowerCase();
+          card.style.display = text.includes(query.toLowerCase()) ? "" : "none";
+        });
+      }
+
+      // Hospitals
+      function filterHospitals() {
+        const search = document
+          .getElementById("hospitalSearch")
+          .value.toLowerCase();
+        const state = document.getElementById("stateFilter").value;
+        const specialist = document.getElementById("specialistFilter").value;
+        const cards = document.querySelectorAll(
+          "#hospitalsGrid .hospital-card",
+        );
+        let visible = 0;
+
+        cards.forEach((card) => {
+          const text = card.textContent.toLowerCase();
+          const cardState = card.dataset.state;
+          const cardSpecialists = card.dataset.specialists;
+
+          const matchesSearch = text.includes(search);
+          const matchesState = !state || cardState === state;
+          const matchesSpecialist =
+            !specialist || cardSpecialists.includes(specialist);
+
+          if (matchesSearch && matchesState && matchesSpecialist) {
+            card.style.display = "";
+            visible++;
+          } else {
+            card.style.display = "none";
+          }
+        });
+
+        document.getElementById("hospitalCount").textContent = visible;
+      }
+
+      // Therapy Guide
+      function filterTherapy(query) {
+        const cards = document.querySelectorAll("#therapyGrid .therapy-card");
+        cards.forEach((card) => {
+          const text = card.textContent.toLowerCase();
+          card.style.display = text.includes(query.toLowerCase()) ? "" : "none";
+        });
+      }
+
+      // Appointment
+      async function submitAppointment(e) {
+        e.preventDefault();
+
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalBtnHtml = submitBtn ? submitBtn.innerHTML : null;
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML =
+            '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+        }
+
+        const payload = {
+          fullName: document.getElementById("apptFullName").value,
+          phone: document.getElementById("apptPhone").value,
+          email: document.getElementById("apptEmail").value || undefined,
+          hospitalId: document.getElementById("apptHospital").value || undefined,
+          specialistId:
+            document.getElementById("apptSpecialist").value || undefined,
+          preferredDate: document.getElementById("apptDate").value,
+          preferredTimeSlot: document.getElementById("apptTimeSlot").value,
+          notes: document.getElementById("apptNotes").value || undefined,
+        };
+
+        try {
+          const base = window.MEDEXPERT_API_BASE_URL || "";
+          const res = await fetch(`${base}/appointments`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const data = await res.json().catch(() => ({}));
+
+          if (!res.ok) {
+            throw new Error(data.message || "Could not submit appointment.");
+          }
+
+          document.getElementById("successModal").classList.remove("hidden");
+          document.getElementById("appointmentForm").reset();
+        } catch (err) {
+          alert(
+            err.message ||
+              "Something went wrong submitting your appointment. Please try again.",
+          );
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnHtml;
+          }
+        }
+      }
+
+      function closeSuccessModal() {
+        document.getElementById("successModal").classList.add("hidden");
+        showPage("home");
+      }
+
+      // Admin
+      let medexpertAdminToken = null;
+
+      async function adminLogin(e) {
+        e.preventDefault();
+        const email = document.getElementById("adminEmail").value;
+        const password = document.getElementById("adminPassword").value;
+        const errorEl = document.getElementById("adminError");
+
+        try {
+          const base = window.MEDEXPERT_API_BASE_URL || "";
+          const res = await fetch(`${base}/admin/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+          const data = await res.json().catch(() => ({}));
+
+          if (!res.ok) {
+            throw new Error(data.message || "Incorrect email or password.");
+          }
+
+          medexpertAdminToken = data.data.token;
+
+          document
+            .querySelectorAll(".page-section")
+            .forEach((s) => s.classList.add("hidden"));
+          document
+            .getElementById("page-admin-dashboard")
+            .classList.remove("hidden");
+          errorEl.classList.add("hidden");
+          loadAdminDashboardStats();
+        } catch (err) {
+          errorEl.textContent =
+            err.message || "Incorrect password. Please try again.";
+          errorEl.classList.remove("hidden");
+        }
+      }
+
+      function adminLogout() {
+        medexpertAdminToken = null;
+        document
+          .querySelectorAll(".page-section")
+          .forEach((s) => s.classList.add("hidden"));
+        document.getElementById("page-admin").classList.remove("hidden");
+        document.getElementById("adminPassword").value = "";
+        document.getElementById("adminEmail").value = "";
+      }
+
+      async function loadAdminDashboardStats() {
+        if (!medexpertAdminToken) return;
+        try {
+          const base = window.MEDEXPERT_API_BASE_URL || "";
+          const res = await fetch(`${base}/admin/dashboard/stats`, {
+            headers: { Authorization: `Bearer ${medexpertAdminToken}` },
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) return;
+
+          const s = data.data;
+          document.getElementById("statTotalHospitals").textContent =
+            s.totalHospitals;
+          document.getElementById("statTotalSpecialists").textContent =
+            s.totalSpecialists;
+          document.getElementById("statTotalAppointments").textContent =
+            s.totalAppointments;
+          document.getElementById("statTotalSymptomChecks").textContent =
+            s.totalSymptomChecks;
+        } catch (err) {
+          // Dashboard stats are non-critical; fail silently and keep
+          // the existing numbers on screen.
+        }
+      }
+
+      function togglePassword() {
+        const input = document.getElementById("adminPassword");
+        const icon = document.getElementById("eyeIcon");
+        if (input.type === "password") {
+          input.type = "text";
+          icon.classList.remove("fa-eye");
+          icon.classList.add("fa-eye-slash");
+        } else {
+          input.type = "password";
+          icon.classList.remove("fa-eye-slash");
+          icon.classList.add("fa-eye");
+        }
+      }
+
+      // Close modals on escape
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          closeAnalysis();
+          closeSuccessModal();
+          closeChat();
+        }
+      });
+
+      // ==================== AI CHAT WIDGET (rule-based, no backend) ====================
+      let chatOpen = false;
+
+      function toggleChat() {
+        chatOpen = !chatOpen;
+        const win = document.getElementById("chatWindow");
+        const icon = document.getElementById("chatFabIcon");
+        if (chatOpen) {
+          win.classList.add("open");
+          icon.classList.remove("fa-comment-medical");
+          icon.classList.add("fa-chevron-down");
+          setTimeout(() => document.getElementById("chatInput").focus(), 300);
+        } else {
+          win.classList.remove("open");
+          icon.classList.remove("fa-chevron-down");
+          icon.classList.add("fa-comment-medical");
+        }
+      }
+
+      function closeChat() {
+        if (chatOpen) toggleChat();
+      }
+
+      function appendChatBubble(text, sender) {
+        const body = document.getElementById("chatBody");
+        const bubble = document.createElement("div");
+        bubble.className = "chat-bubble " + sender;
+        bubble.textContent = text;
+        body.appendChild(bubble);
+        body.scrollTop = body.scrollHeight;
+      }
+
+      function showChatTyping() {
+        const body = document.getElementById("chatBody");
+        const typing = document.createElement("div");
+        typing.className = "chat-typing";
+        typing.id = "chatTypingIndicator";
+        typing.innerHTML = "<span></span><span></span><span></span>";
+        body.appendChild(typing);
+        body.scrollTop = body.scrollHeight;
+      }
+
+      function hideChatTyping() {
+        const typing = document.getElementById("chatTypingIndicator");
+        if (typing) typing.remove();
+      }
+
+      // Simple rule-based reply generator — mirrors the symptom/specialist/
+      // hospital/appointment data already on the page. No external AI API.
+      function getChatReply(messageRaw) {
+        const message = messageRaw.toLowerCase();
+
+        if (/\b(hi|hello|hey|good morning|good afternoon|good evening)\b/.test(message)) {
+          return "Hello! How can I help you today? You can ask me about symptoms, specialists, hospitals, or booking an appointment.";
+        }
+        if (message.includes("symptom")) {
+          return "You can describe your symptoms on the Symptom Checker page and I'll help suggest possible conditions and the right specialist. Want me to take you there?";
+        }
+        if (message.includes("specialist") || message.includes("doctor")) {
+          return "We have Cardiologists, Dermatologists, Neurologists, ENT Specialists, Gastroenterologists, and General Practitioners listed. Check the Specialists page to see who treats what.";
+        }
+        if (message.includes("hospital")) {
+          return "We list verified hospitals across Lagos, Abuja, Rivers, and Oyo. You can filter by state or specialist on the Hospitals page.";
+        }
+        if (message.includes("appointment") || message.includes("book")) {
+          return "You can book an appointment by going to the Book Appointment page — just fill in your details, pick a hospital and specialist, and choose a time.";
+        }
+        if (message.includes("price") || message.includes("cost") || message.includes("fee")) {
+          return "MedExpert itself is free to use. Hospital consultation fees vary by hospital — please check directly with your chosen hospital.";
+        }
+        if (message.includes("emergency") || message.includes("urgent")) {
+          return "If this is a medical emergency, please go to the nearest hospital or call emergency services immediately. This assistant is for guidance only, not emergency care.";
+        }
+        if (message.includes("malaria")) {
+          return "Malaria is common in Nigeria — typical symptoms include fever, headache, and fatigue. See the Therapy Guide for self-care steps and when to seek urgent care.";
+        }
+        if (message.includes("help") || message.includes("how")) {
+          return "I can help you check symptoms, find a specialist, locate a hospital, or book an appointment. Just tell me what you need.";
+        }
+        if (message.includes("thank")) {
+          return "You're welcome! Let me know if there's anything else I can help with.";
+        }
+        return "I'm a simple assistant and may not understand everything. Try asking about symptoms, specialists, hospitals, or appointments — or use the buttons above.";
+      }
+
+      function handleChatSubmit(e) {
+        e.preventDefault();
+        const input = document.getElementById("chatInput");
+        const text = input.value.trim();
+        if (!text) return;
+        sendChatMessage(text);
+        input.value = "";
+      }
+
+      function sendChatQuickReply(text) {
+        sendChatMessage(text);
+      }
+
+      function sendChatMessage(text) {
+        appendChatBubble(text, "user");
+        showChatTyping();
+        const delay = 500 + Math.random() * 400;
+        setTimeout(() => {
+          hideChatTyping();
+          appendChatBubble(getChatReply(text), "bot");
+        }, delay);
+      }
+
+      // ==================== Scroll-reveal for sections ====================
+      // Adds a gentle entrance animation as sections come into view.
+      // Falls back gracefully if IntersectionObserver isn't supported.
+      document.addEventListener("DOMContentLoaded", () => {
+        if (!("IntersectionObserver" in window)) return;
+        const revealTargets = document.querySelectorAll(
+          ".step-card, .specialist-card, .hospital-card, .therapy-card, .feature-badge"
+        );
+        revealTargets.forEach((el) => el.classList.add("reveal-on-scroll"));
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add("revealed");
+                observer.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
+        );
+        revealTargets.forEach((el) => observer.observe(el));
+      });
+    </script>
+  </body>
+</html>
